@@ -379,11 +379,17 @@
   .field-row{display:flex; gap:8px; margin-bottom:10px;}
   .field{flex:1; display:flex; flex-direction:column; gap:5px;}
   .field label{font-size:11.5px; color:var(--ink-soft); font-weight:700; padding-left:2px;}
-  .field input{
+  .field input, .field select{
     width:100%; padding:11px 12px; border-radius:12px; border:2px solid var(--line);
     background:var(--surface-soft); color:var(--ink); font-size:14.5px; outline:none;
+    font-family:inherit; -webkit-appearance:none; appearance:none;
   }
-  .field input:focus{border-color:var(--pink);}
+  .field select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%239A897E'%3E%3Cpath d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%239A897E' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; background-size:14px;
+    padding-right:32px;
+  }
+  .field input:focus, .field select:focus{border-color:var(--pink);}
   .submit-btn{
     width:100%; padding:13px; border:none; border-radius:14px;
     background:var(--mint); color:#fff; font-size:15px; font-weight:700; cursor:pointer;
@@ -937,7 +943,7 @@
         list.push({
           id: doc.id,
           memo: d.memo || "",
-          date: d.date || "",
+          day: Number(d.day) || 1,
           amount: Number(d.amount) || 0,
           createdAt: d.createdAt || "",
           updatedAt: d.updatedAt || d.createdAt || ""
@@ -999,16 +1005,15 @@
             '<label for="fixedMemoInput">항목명</label>' +
             '<input id="fixedMemoInput" type="text" placeholder="예: 월세, 관리비, 보험료" maxlength="40" required></div>' +
           '<div class="field-row">' +
-            '<div class="field"><label for="fixedDateInput">날짜</label>' +
-            '<input id="fixedDateInput" type="date"></div>' +
+            '<div class="field"><label for="fixedDayInput">매달 며칠</label>' +
+            '<select id="fixedDayInput">' + dayOptionsHtml(new Date().getDate()) + '</select></div>' +
             '<div class="field"><label for="fixedAmountInput">금액</label>' +
             '<input id="fixedAmountInput" type="number" inputmode="numeric" min="0" step="1" placeholder="0" required></div>' +
           '</div>' +
           '<button type="button" class="submit-btn secondary" id="fixedSubmitBtn">고정지출로 등록</button>' +
         '</div>';
-      document.getElementById("fixedDateInput").value = todayStr();
       document.getElementById("fixedSubmitBtn").addEventListener("click", onFixedAddSubmit);
-      ["fixedMemoInput","fixedDateInput","fixedAmountInput"].forEach(function(fid){
+      ["fixedMemoInput","fixedAmountInput"].forEach(function(fid){
         document.getElementById(fid).addEventListener("keydown", function(ev){
           if(ev.key === "Enter"){ ev.preventDefault(); onFixedAddSubmit(ev); }
         });
@@ -1139,12 +1144,12 @@
   function onFixedAddSubmit(ev){
     ev.preventDefault();
     var memoVal = document.getElementById("fixedMemoInput").value.trim();
-    var dateVal = document.getElementById("fixedDateInput").value || todayStr();
+    var dayVal = parseInt(document.getElementById("fixedDayInput").value, 10) || new Date().getDate();
     var amountVal = parseFloat(document.getElementById("fixedAmountInput").value);
     if(!memoVal || !amountVal || amountVal <= 0) return;
 
     var fixedNowIso = new Date().toISOString();
-    var payload = { memo: memoVal, date: dateVal, amount: amountVal, createdAt: fixedNowIso, updatedAt: fixedNowIso };
+    var payload = { memo: memoVal, day: dayVal, amount: amountVal, createdAt: fixedNowIso, updatedAt: fixedNowIso };
     var btn = document.getElementById("fixedSubmitBtn");
     btn.disabled = true;
 
@@ -1153,8 +1158,6 @@
       var a = document.getElementById("fixedAmountInput");
       if(m) m.value = "";
       if(a) a.value = "";
-      var d = document.getElementById("fixedDateInput");
-      if(d) d.value = todayStr();
       var b = document.getElementById("fixedSubmitBtn");
       if(b) b.disabled = false;
     }
@@ -1172,12 +1175,12 @@
     db.collection("fixedItems").add(payload).then(function(){ done(); }).catch(function(){ done(); });
   }
 
-  function saveFixedItem(id, newMemo, newDate, newAmount){
+  function saveFixedItem(id, newMemo, newDay, newAmount){
     if(localMode || !db){
       localFixedItems = localFixedItems.map(function(it){
         if(it.id === id){
           it.memo = newMemo;
-          it.date = newDate;
+          it.day = newDay;
           it.amount = newAmount;
           it.updatedAt = new Date().toISOString();
         }
@@ -1190,7 +1193,7 @@
       return;
     }
     db.doc("fixedItems/" + id).update({
-      memo: newMemo, date: newDate, amount: newAmount, updatedAt: new Date().toISOString()
+      memo: newMemo, day: newDay, amount: newAmount, updatedAt: new Date().toISOString()
     }).then(function(){
       editingFixedId = null;
       renderAll();
@@ -1208,11 +1211,12 @@
     db.doc("fixedItems/" + id).delete().catch(function(){});
   }
 
-  function fmtShortDate(dateStr){
-    if(!dateStr) return "";
-    var parts = dateStr.split("-");
-    if(parts.length !== 3) return "";
-    return parseInt(parts[1],10) + "월 " + parseInt(parts[2],10) + "일";
+  function dayOptionsHtml(selectedDay){
+    var html = "";
+    for(var i=1;i<=31;i++){
+      html += '<option value="' + i + '"' + (i === selectedDay ? " selected" : "") + '>' + i + '일</option>';
+    }
+    return html;
   }
 
   function renderFixedList(){
@@ -1246,11 +1250,10 @@
         var row2 = document.createElement("div");
         row2.className = "fr-edit-row2";
 
-        var dateInput = document.createElement("input");
-        dateInput.type = "date";
-        dateInput.className = "fr-date-input";
-        dateInput.value = item.date || "";
-        row2.appendChild(dateInput);
+        var daySelect = document.createElement("select");
+        daySelect.className = "fr-date-input";
+        daySelect.innerHTML = dayOptionsHtml(item.day || 1);
+        row2.appendChild(daySelect);
 
         var amtInput = document.createElement("input");
         amtInput.type = "number";
@@ -1272,7 +1275,7 @@
         function commitFixedEdit(){
           var mv = memoInput.value.trim();
           var av = parseFloat(amtInput.value);
-          var dv = dateInput.value || item.date || todayStr();
+          var dv = parseInt(daySelect.value, 10) || item.day || 1;
           if(mv && av && av > 0) saveFixedItem(item.id, mv, dv, av);
         }
         saveBtn.addEventListener("click", commitFixedEdit);
@@ -1302,10 +1305,10 @@
         memoDiv.className = "fr-memo";
         memoDiv.textContent = item.memo;
         info.appendChild(memoDiv);
-        if(item.date){
+        if(item.day){
           var dateDiv = document.createElement("div");
           dateDiv.className = "fr-date";
-          dateDiv.textContent = fmtShortDate(item.date);
+          dateDiv.textContent = "매달 " + item.day + "일";
           info.appendChild(dateDiv);
         }
         row.appendChild(info);
