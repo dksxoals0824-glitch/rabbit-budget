@@ -745,6 +745,26 @@
       db = firebase.firestore();
       subscribeExpenses();
       subscribeFixedItems();
+
+      // mobile browsers freeze/park background tabs, which can stall the
+      // realtime connection silently. force a clean reconnect + re-subscribe
+      // whenever the app comes back to the foreground so data is fresh
+      // without the person having to manually refresh the page.
+      function refreshConnection(){
+        if(localMode || !db) return;
+        db.disableNetwork().then(function(){
+          return db.enableNetwork();
+        }).then(function(){
+          subscribeExpenses();
+          subscribeFixedItems();
+        }).catch(function(){});
+      }
+      document.addEventListener("visibilitychange", function(){
+        if(!document.hidden) refreshConnection();
+      });
+      window.addEventListener("pageshow", refreshConnection);
+      window.addEventListener("online", refreshConnection);
+      window.addEventListener("focus", refreshConnection);
     }catch(e){
       enterLocalMode();
     }
@@ -781,9 +801,11 @@
     renderAll();
   }
 
+  var unsubExpenses = null;
   function subscribeExpenses(){
+    if(unsubExpenses){ unsubExpenses(); unsubExpenses = null; }
     var col = db.collection("expenses");
-    col.onSnapshot(function(snap){
+    unsubExpenses = col.onSnapshot(function(snap){
       var list = [];
       snap.docs.forEach(function(doc){
         var d = doc.data();
@@ -805,9 +827,11 @@
     });
   }
 
+  var unsubFixedItems = null;
   function subscribeFixedItems(){
+    if(unsubFixedItems){ unsubFixedItems(); unsubFixedItems = null; }
     var col = db.collection("fixedItems");
-    col.onSnapshot(function(snap){
+    unsubFixedItems = col.onSnapshot(function(snap){
       var list = [];
       snap.docs.forEach(function(doc){
         var d = doc.data();
