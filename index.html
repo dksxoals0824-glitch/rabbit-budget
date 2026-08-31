@@ -187,15 +187,32 @@
   #app{
     position:relative; z-index:1;
     max-width:520px; margin:0 auto;
-    padding:20px 16px 100px;
+    padding:max(20px, env(safe-area-inset-top, 20px)) 16px 100px;
   }
   header.top{
-    display:flex; align-items:center; gap:12px;
+    display:flex; align-items:center; gap:8px;
     padding:6px 4px 18px;
   }
-  header.top .titles{flex:1; min-width:0;}
-  header.top h1{font-size:22px; margin:0; line-height:1.15;}
-  header.top .sub{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  header.top .titles{flex:0 1 auto; min-width:0;}
+  header.top h1{font-size:22px; margin:0; line-height:1.15; white-space:nowrap;}
+  header.top .sub{font-size:12px; color:var(--ink-soft); margin-top:2px; white-space:nowrap;}
+  header.top .header-note{
+    position:relative; overflow:visible;
+    flex:1 1 auto; min-width:0; margin-left:auto; padding-left:6px;
+    text-align:right; font-family:'Jua',sans-serif; font-weight:400;
+    font-size:14px; line-height:1.45; color:var(--periwinkle); opacity:0.95;
+  }
+  @media (max-width:345px){
+    header.top .header-note{font-size:11.5px; line-height:1.4;}
+  }
+  .header-note .mini-heart{
+    position:absolute; top:-6px; font-size:10px; line-height:1; opacity:0;
+    animation:heartPop 2.6s ease-in infinite; pointer-events:none;
+  }
+  .header-note .mini-heart.hn1{left:6%;  color:var(--pink);       font-size:9px;  animation-delay:0.2s;}
+  .header-note .mini-heart.hn2{left:32%; color:var(--periwinkle); font-size:8px;  animation-delay:1.1s;}
+  .header-note .mini-heart.hn3{left:58%; color:var(--pink);       font-size:10px; animation-delay:1.9s;}
+  .header-note .mini-heart.hn4{left:84%; color:var(--periwinkle); font-size:8.5px; animation-delay:0.7s;}
 
   /* family icon: mom + dad hugging baby bunny, hearts popping above */
   .family-icon{
@@ -374,11 +391,12 @@
 
   /* fixed items list (inside addCard when 고정지출 tab active) */
   .fixed-row{
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
     background:var(--surface-soft); border-radius:14px; padding:10px 12px; margin-bottom:8px;
   }
   .fixed-row .fr-info{flex:1; min-width:0;}
   .fixed-row .fr-memo{font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .fixed-row .fr-date{font-size:11px; color:var(--ink-soft); margin-top:2px;}
   .fixed-row .fr-amt{font-size:14.5px; font-weight:700; font-variant-numeric:tabular-nums; flex:none;}
   .fixed-row .fr-amt-input{
     width:110px; padding:7px 8px; border-radius:10px; border:2px solid var(--oat);
@@ -392,6 +410,22 @@
   .fixed-row .fr-btn.save{color:var(--mint); font-size:16px; font-weight:700;}
   .fixed-empty{font-size:12.5px; color:var(--ink-soft); padding:4px 2px 12px;}
 
+  /* fixed-row editing mode: memo + date + amount stacked, actions row below */
+  .fr-edit-fields{
+    flex:1 1 100%; display:flex; flex-direction:column; gap:6px;
+  }
+  .fr-edit-fields .fr-memo-input{
+    width:100%; padding:7px 10px; border-radius:10px; border:2px solid var(--oat);
+    background:var(--surface); color:var(--ink); font-size:13.5px; outline:none;
+  }
+  .fr-edit-row2{display:flex; gap:6px;}
+  .fr-edit-row2 .fr-date-input{
+    flex:1; min-width:0; padding:7px 8px; border-radius:10px; border:2px solid var(--oat);
+    background:var(--surface); color:var(--ink); font-size:12.5px; outline:none;
+  }
+  .fr-edit-row2 .fr-amt-input{flex:1; width:auto;}
+  .fr-edit-actions{flex:1 1 100%; display:flex; gap:8px; justify-content:flex-end;}
+
   /* entries */
   .day-group{margin-bottom:16px;}
   .day-group .day-label{
@@ -402,7 +436,7 @@
   .day-group .day-label:hover{color:var(--pink);}
   .day-group .day-label.picked{color:var(--pink);}
   .entry{
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     background:var(--surface); border-radius:16px; padding:12px 14px;
     box-shadow:0 2px 8px var(--shadow); margin-bottom:8px;
   }
@@ -421,6 +455,16 @@
   }
   .entry .del.confirm{background:var(--danger); color:#fff;}
   .entry .del.save{color:var(--mint); font-size:17px; font-weight:700;}
+
+  /* entry editing mode: memo input full width, amount + actions below */
+  .entry-edit-fields{flex:1 1 100%; display:flex; flex-direction:column; gap:4px;}
+  .entry-edit-fields .entry-memo-input{
+    width:100%; padding:7px 10px; border-radius:10px; border:2px solid var(--oat);
+    background:var(--surface-soft); color:var(--ink); font-size:13.5px; outline:none;
+  }
+  .entry-edit-fields .cat{font-size:11px; color:var(--ink-soft);}
+  .entry-edit-actions{flex:1 1 100%; display:flex; align-items:center; gap:8px; justify-content:flex-end;}
+  .entry-edit-actions .fr-amt-input{flex:1; width:auto; max-width:160px;}
 
   .empty-state{
     text-align:center; padding:40px 20px; color:var(--ink-soft);
@@ -550,6 +594,14 @@
     <div class="titles">
       <h1>토끼네 가계부</h1>
       <div class="sub">설&amp;태민&amp;율의 한 달 생활비 기록</div>
+    </div>
+    <div class="header-note" aria-hidden="true">
+      <span class="mini-heart hn1">♥</span>
+      <span class="mini-heart hn2">♥</span>
+      <span class="mini-heart hn3">♥</span>
+      <span class="mini-heart hn4">♥</span>
+      <div>우리 가족 이번 달도 화이팅</div>
+      <div>세상에서 제일 많이 사랑해</div>
     </div>
   </header>
 
@@ -839,6 +891,7 @@
         list.push({
           id: doc.id,
           memo: d.memo || "",
+          date: d.date || "",
           amount: Number(d.amount) || 0,
           createdAt: d.createdAt || "",
           updatedAt: d.updatedAt || d.createdAt || ""
@@ -896,16 +949,20 @@
         '<h2>고정지출 등록 <span class="hint">한 번 등록하면 매달 자동으로 더해져요</span></h2>' +
         '<div id="fixedListRows"></div>' +
         '<div id="fixedAddForm">' +
-          '<div class="field-row">' +
-            '<div class="field"><label for="fixedMemoInput">항목명</label>' +
+          '<div class="field" style="margin-bottom:10px;">' +
+            '<label for="fixedMemoInput">항목명</label>' +
             '<input id="fixedMemoInput" type="text" placeholder="예: 월세, 관리비, 보험료" maxlength="40" required></div>' +
+          '<div class="field-row">' +
+            '<div class="field"><label for="fixedDateInput">날짜</label>' +
+            '<input id="fixedDateInput" type="date"></div>' +
             '<div class="field"><label for="fixedAmountInput">금액</label>' +
             '<input id="fixedAmountInput" type="number" inputmode="numeric" min="0" step="1" placeholder="0" required></div>' +
           '</div>' +
           '<button type="button" class="submit-btn secondary" id="fixedSubmitBtn">고정지출로 등록</button>' +
         '</div>';
+      document.getElementById("fixedDateInput").value = todayStr();
       document.getElementById("fixedSubmitBtn").addEventListener("click", onFixedAddSubmit);
-      ["fixedMemoInput","fixedAmountInput"].forEach(function(fid){
+      ["fixedMemoInput","fixedDateInput","fixedAmountInput"].forEach(function(fid){
         document.getElementById(fid).addEventListener("keydown", function(ev){
           if(ev.key === "Enter"){ ev.preventDefault(); onFixedAddSubmit(ev); }
         });
@@ -1014,10 +1071,10 @@
     db.doc("expenses/" + id).delete().catch(function(){});
   }
 
-  function saveEntryAmount(id, newAmount){
+  function saveEntryItem(id, newMemo, newAmount){
     if(localMode || !db){
       localEntries = localEntries.map(function(e){
-        if(e.id === id){ e.amount = newAmount; e.updatedAt = new Date().toISOString(); }
+        if(e.id === id){ e.memo = newMemo; e.amount = newAmount; e.updatedAt = new Date().toISOString(); }
         return e;
       });
       entries = localEntries;
@@ -1026,7 +1083,7 @@
       renderAll();
       return;
     }
-    db.doc("expenses/" + id).update({ amount: newAmount, updatedAt: new Date().toISOString() }).then(function(){
+    db.doc("expenses/" + id).update({ memo: newMemo, amount: newAmount, updatedAt: new Date().toISOString() }).then(function(){
       editingEntryId = null;
       renderAll();
     }).catch(function(){});
@@ -1036,11 +1093,12 @@
   function onFixedAddSubmit(ev){
     ev.preventDefault();
     var memoVal = document.getElementById("fixedMemoInput").value.trim();
+    var dateVal = document.getElementById("fixedDateInput").value || todayStr();
     var amountVal = parseFloat(document.getElementById("fixedAmountInput").value);
     if(!memoVal || !amountVal || amountVal <= 0) return;
 
     var fixedNowIso = new Date().toISOString();
-    var payload = { memo: memoVal, amount: amountVal, createdAt: fixedNowIso, updatedAt: fixedNowIso };
+    var payload = { memo: memoVal, date: dateVal, amount: amountVal, createdAt: fixedNowIso, updatedAt: fixedNowIso };
     var btn = document.getElementById("fixedSubmitBtn");
     btn.disabled = true;
 
@@ -1049,6 +1107,8 @@
       var a = document.getElementById("fixedAmountInput");
       if(m) m.value = "";
       if(a) a.value = "";
+      var d = document.getElementById("fixedDateInput");
+      if(d) d.value = todayStr();
       var b = document.getElementById("fixedSubmitBtn");
       if(b) b.disabled = false;
     }
@@ -1066,10 +1126,15 @@
     db.collection("fixedItems").add(payload).then(function(){ done(); }).catch(function(){ done(); });
   }
 
-  function saveFixedAmount(id, newAmount){
+  function saveFixedItem(id, newMemo, newDate, newAmount){
     if(localMode || !db){
       localFixedItems = localFixedItems.map(function(it){
-        if(it.id === id){ it.amount = newAmount; it.updatedAt = new Date().toISOString(); }
+        if(it.id === id){
+          it.memo = newMemo;
+          it.date = newDate;
+          it.amount = newAmount;
+          it.updatedAt = new Date().toISOString();
+        }
         return it;
       });
       fixedItems = localFixedItems;
@@ -1078,7 +1143,9 @@
       renderAll();
       return;
     }
-    db.doc("fixedItems/" + id).update({ amount: newAmount, updatedAt: new Date().toISOString() }).then(function(){
+    db.doc("fixedItems/" + id).update({
+      memo: newMemo, date: newDate, amount: newAmount, updatedAt: new Date().toISOString()
+    }).then(function(){
       editingFixedId = null;
       renderAll();
     }).catch(function(){});
@@ -1093,6 +1160,13 @@
       return;
     }
     db.doc("fixedItems/" + id).delete().catch(function(){});
+  }
+
+  function fmtShortDate(dateStr){
+    if(!dateStr) return "";
+    var parts = dateStr.split("-");
+    if(parts.length !== 3) return "";
+    return parseInt(parts[1],10) + "월 " + parseInt(parts[2],10) + "일";
   }
 
   function renderFixedList(){
@@ -1112,34 +1186,56 @@
       var row = document.createElement("div");
       row.className = "fixed-row";
 
-      var info = document.createElement("div");
-      info.className = "fr-info";
-      var memoDiv = document.createElement("div");
-      memoDiv.className = "fr-memo";
-      memoDiv.textContent = item.memo;
-      info.appendChild(memoDiv);
-      row.appendChild(info);
-
       if(editingFixedId === item.id){
-        var input = document.createElement("input");
-        input.type = "number";
-        input.className = "fr-amt-input";
-        input.value = item.amount;
-        input.min = "0";
-        row.appendChild(input);
+        var editFields = document.createElement("div");
+        editFields.className = "fr-edit-fields";
+
+        var memoInput = document.createElement("input");
+        memoInput.type = "text";
+        memoInput.className = "fr-memo-input";
+        memoInput.value = item.memo;
+        memoInput.maxLength = 40;
+        editFields.appendChild(memoInput);
+
+        var row2 = document.createElement("div");
+        row2.className = "fr-edit-row2";
+
+        var dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.className = "fr-date-input";
+        dateInput.value = item.date || "";
+        row2.appendChild(dateInput);
+
+        var amtInput = document.createElement("input");
+        amtInput.type = "number";
+        amtInput.className = "fr-amt-input";
+        amtInput.value = item.amount;
+        amtInput.min = "0";
+        row2.appendChild(amtInput);
+
+        editFields.appendChild(row2);
+        row.appendChild(editFields);
+
+        var actions = document.createElement("div");
+        actions.className = "fr-edit-actions";
 
         var saveBtn = document.createElement("button");
         saveBtn.type = "button";
         saveBtn.className = "fr-btn save";
         saveBtn.textContent = "✓";
-        saveBtn.addEventListener("click", function(){
-          var v = parseFloat(input.value);
-          if(v && v > 0) saveFixedAmount(item.id, v);
-        });
-        row.appendChild(saveBtn);
+        function commitFixedEdit(){
+          var mv = memoInput.value.trim();
+          var av = parseFloat(amtInput.value);
+          var dv = dateInput.value || item.date || todayStr();
+          if(mv && av && av > 0) saveFixedItem(item.id, mv, dv, av);
+        }
+        saveBtn.addEventListener("click", commitFixedEdit);
+        actions.appendChild(saveBtn);
 
-        input.addEventListener("keydown", function(e){
-          if(e.key === "Enter"){ e.preventDefault(); saveBtn.click(); }
+        [memoInput, amtInput].forEach(function(el){
+          el.addEventListener("keydown", function(e){
+            if(e.key === "Enter"){ e.preventDefault(); commitFixedEdit(); }
+          });
         });
 
         var cancelBtn = document.createElement("button");
@@ -1150,8 +1246,24 @@
           editingFixedId = null;
           renderFixedList();
         });
-        row.appendChild(cancelBtn);
+        actions.appendChild(cancelBtn);
+
+        row.appendChild(actions);
       }else{
+        var info = document.createElement("div");
+        info.className = "fr-info";
+        var memoDiv = document.createElement("div");
+        memoDiv.className = "fr-memo";
+        memoDiv.textContent = item.memo;
+        info.appendChild(memoDiv);
+        if(item.date){
+          var dateDiv = document.createElement("div");
+          dateDiv.className = "fr-date";
+          dateDiv.textContent = fmtShortDate(item.date);
+          info.appendChild(dateDiv);
+        }
+        row.appendChild(info);
+
         var amtDiv = document.createElement("div");
         amtDiv.className = "fr-amt";
         amtDiv.textContent = fmtWon(item.amount);
@@ -1160,7 +1272,7 @@
         var editBtn = document.createElement("button");
         editBtn.type = "button";
         editBtn.className = "fr-btn";
-        editBtn.setAttribute("aria-label","금액 수정");
+        editBtn.setAttribute("aria-label","항목 수정");
         editBtn.textContent = "✎";
         editBtn.addEventListener("click", function(){
           editingFixedId = item.id;
@@ -1359,38 +1471,50 @@
         chip.style.setProperty("--chip-accent", c.accent);
         row.appendChild(chip);
 
-        var info = document.createElement("div");
-        info.className = "info";
-        var memoDiv = document.createElement("div");
-        memoDiv.className = "memo";
-        memoDiv.textContent = e.memo;
-        var catDiv = document.createElement("div");
-        catDiv.className = "cat";
-        catDiv.textContent = c.label;
-        info.appendChild(memoDiv);
-        info.appendChild(catDiv);
-        row.appendChild(info);
-
         if(editingEntryId === e.id){
+          var editFields = document.createElement("div");
+          editFields.className = "entry-edit-fields";
+
+          var memoInput = document.createElement("input");
+          memoInput.type = "text";
+          memoInput.className = "entry-memo-input";
+          memoInput.value = e.memo;
+          memoInput.maxLength = 60;
+          editFields.appendChild(memoInput);
+
+          var catLabel = document.createElement("div");
+          catLabel.className = "cat";
+          catLabel.textContent = c.label;
+          editFields.appendChild(catLabel);
+
+          row.appendChild(editFields);
+
+          var actions = document.createElement("div");
+          actions.className = "entry-edit-actions";
+
           var amtInput = document.createElement("input");
           amtInput.type = "number";
           amtInput.className = "fr-amt-input";
           amtInput.value = e.amount;
           amtInput.min = "0";
-          row.appendChild(amtInput);
+          actions.appendChild(amtInput);
 
           var saveBtn = document.createElement("button");
           saveBtn.type = "button";
           saveBtn.className = "del save";
           saveBtn.textContent = "✓";
-          saveBtn.addEventListener("click", function(){
+          function commitEntryEdit(){
+            var mv = memoInput.value.trim();
             var v = parseFloat(amtInput.value);
-            if(v && v > 0) saveEntryAmount(e.id, v);
-          });
-          row.appendChild(saveBtn);
+            if(mv && v && v > 0) saveEntryItem(e.id, mv, v);
+          }
+          saveBtn.addEventListener("click", commitEntryEdit);
+          actions.appendChild(saveBtn);
 
-          amtInput.addEventListener("keydown", function(ev){
-            if(ev.key === "Enter"){ ev.preventDefault(); saveBtn.click(); }
+          [memoInput, amtInput].forEach(function(el){
+            el.addEventListener("keydown", function(ev){
+              if(ev.key === "Enter"){ ev.preventDefault(); commitEntryEdit(); }
+            });
           });
 
           var cancelBtn = document.createElement("button");
@@ -1401,8 +1525,22 @@
             editingEntryId = null;
             renderAll();
           });
-          row.appendChild(cancelBtn);
+          actions.appendChild(cancelBtn);
+
+          row.appendChild(actions);
         }else{
+          var info = document.createElement("div");
+          info.className = "info";
+          var memoDiv = document.createElement("div");
+          memoDiv.className = "memo";
+          memoDiv.textContent = e.memo;
+          var catDiv = document.createElement("div");
+          catDiv.className = "cat";
+          catDiv.textContent = c.label;
+          info.appendChild(memoDiv);
+          info.appendChild(catDiv);
+          row.appendChild(info);
+
           var amtDiv = document.createElement("div");
           amtDiv.className = "amt";
           amtDiv.textContent = fmtWon(e.amount);
@@ -1411,7 +1549,7 @@
           var editBtn = document.createElement("button");
           editBtn.type = "button";
           editBtn.className = "del";
-          editBtn.setAttribute("aria-label","금액 수정");
+          editBtn.setAttribute("aria-label","항목 수정");
           editBtn.textContent = "✎";
           editBtn.addEventListener("click", function(){
             editingEntryId = e.id;
