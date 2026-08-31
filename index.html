@@ -196,17 +196,18 @@
   header.top .titles{flex:0 1 auto; min-width:0;}
   header.top h1{font-size:22px; margin:0; line-height:1.15; white-space:nowrap;}
   header.top .sub{font-size:12px; color:var(--ink-soft); margin-top:2px; white-space:nowrap;}
+  /* tagline sits on the SAME row as the title, to the right. Its font-size
+     is set at runtime by JS (fitHeaderNote) so it always shrinks to whatever
+     room is actually left after the icon+title — it can never overlap them
+     or run off screen, on any device/font. */
   header.top .header-note{
     position:relative; overflow:visible;
     flex:1 1 auto; min-width:0; margin-left:auto; padding-left:6px;
     text-align:right; font-family:'Jua',sans-serif; font-weight:400;
-    font-size:12px; line-height:1.4; color:var(--periwinkle); opacity:0.95;
+    font-size:13.5px; line-height:1.4; color:var(--periwinkle); opacity:0.95;
   }
   header.top .header-note div{
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  @media (max-width:345px){
-    header.top .header-note{font-size:10px; line-height:1.35;}
   }
   .header-note .mini-heart{
     position:absolute; top:-6px; font-size:10px; line-height:1; opacity:0;
@@ -768,6 +769,48 @@
     document.getElementById("gate").hidden = true;
     document.getElementById("app").hidden = false;
     initApp();
+    fitHeaderNote();
+  }
+
+  // shrink the header tagline's font-size, in small steps, until both lines
+  // fit inside whatever space flexbox actually left it (never overlaps the
+  // icon/title, never runs past the screen edge) — re-runs on resize/rotate
+  // and once more after the web font finishes loading, since font metrics
+  // change the text width.
+  function fitHeaderNote(){
+    var note = document.querySelector(".header-note");
+    if(!note) return;
+    var lines = note.querySelectorAll("div");
+    if(!lines.length) return;
+
+    var maxSize = 13.5, minSize = 7.5;
+    var size = maxSize;
+    note.style.fontSize = size + "px";
+
+    function overflowing(){
+      var avail = note.clientWidth;
+      if(avail <= 0) return false;
+      for(var i=0;i<lines.length;i++){
+        if(lines[i].scrollWidth > avail + 0.5) return true;
+      }
+      return false;
+    }
+
+    var guard = 0;
+    while(overflowing() && size > minSize && guard < 30){
+      size -= 0.5;
+      note.style.fontSize = size + "px";
+      guard++;
+    }
+  }
+
+  window.addEventListener("resize", function(){
+    if(!document.getElementById("app").hidden) fitHeaderNote();
+  });
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){
+      if(!document.getElementById("app").hidden) fitHeaderNote();
+    });
   }
 
   // ---------- app init ----------
